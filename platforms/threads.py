@@ -38,12 +38,10 @@ LOG_DIR.mkdir(parents=True, exist_ok=True)
 # two smoke tests on 2026-06-04 + full DOM dumps in logs/screenshots/
 # threads_*_post_options_popover_dom_*.html.
 #
-# Until Meta brings scheduling back to the web composer OR we route
-# Threads through Buffer/Threads API, post() short-circuits any
-# scheduled_for request and posts immediately, tagging the receipt
-# `scheduling_skipped: true` + `scheduling_unavailable_reason` so the
-# audit trail is intact. Flip this to False to re-enable the legacy
-# schedule-button hunt (kept intact for the day Threads rolls it back).
+# If the Schedule control is missing again, set SCHEDULING_DISABLED = True:
+# post() then refuses any scheduled_for request with a
+# `missing_schedule_control` wall (pause; never Post now). False (default)
+# runs the normal schedule-button hunt.
 SCHEDULING_DISABLED = False
 SCHEDULING_UNAVAILABLE_REASON = "ui_removed_2026-06"
 
@@ -92,8 +90,7 @@ def _dismiss_threads_queue_cap_modal(page) -> None:
         except Exception:
             continue
 
-# When SCHEDULING_DISABLED is True, every "scheduled" post collapses to
-# an immediate post. Retry sweeps that only re-run Threads (no other
+# Pacing guard. Retry sweeps that only re-run Threads (no other
 # platforms slowing things down) can therefore fire posts back-to-back
 # every ~60-90s. Add a self-imposed sleep at the end of each post() so
 # even a tight retry loop respects Threads' (tightened in 2026) rate
@@ -390,11 +387,9 @@ def post(video: Path, captions: dict, *, scheduled_for: Optional[str] = None, **
     basename = video.stem
 
     # ------------------------------------------------------------------
-    # 2026-06-04 Threads web composer no longer has a Schedule UI. Capture
-    # the caller's intended slot for the audit trail, then null out
-    # scheduled_for so the existing schedule-button hunt is skipped and
-    # we go straight to immediate post. See SCHEDULING_DISABLED comment
-    # at top of file.
+    # If the Threads Schedule UI is marked unavailable, refuse with a wall
+    # (pause). Never fall back to an immediate post. See SCHEDULING_DISABLED
+    # comment at top of file.
     # ------------------------------------------------------------------
     scheduling_target = None
     scheduling_skipped = False
