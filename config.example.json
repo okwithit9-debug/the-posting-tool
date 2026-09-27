@@ -1,0 +1,18 @@
+{
+  "youtube": {
+    "client_id": "YOUR_GOOGLE_OAUTH_CLIENT_ID",
+    "client_secret": "YOUR_GOOGLE_OAUTH_CLIENT_SECRET",
+    "token_file": "tokens/youtube_token.json"
+  },
+  "reddit": {
+    "client_id": "YOUR_REDDIT_APP_ID",
+    "client_secret": "YOUR_REDDIT_APP_SECRET",
+    "username": "YOUR_REDDIT_USERNAME",
+    "password": "YOUR_REDDIT_PASSWORD",
+    "user_agent": "the-posting-tool/1.0 by YOUR_REDDIT_USERNAME"
+  },
+  "instagram": {
+    "business_suite_asset_id": "YOUR_META_ASSET_ID",
+    "business_suite_business_id": "YOUR_META_BUSINESS_ID"
+  }
+}

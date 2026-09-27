@@ -1,0 +1,15 @@
+{
+  "_comment": "Optional Python-backup defaults only. Replace with YOUR topics and board. Sidecar override wins. Not a shipped brand.",
+  "_paused_comment": "Platforms in paused_platforms are skipped at dispatch. Reddit is paused until the user adds API credentials. There is no shipped brand handle or topic rotation.",
+  "paused_platforms": [
+    "reddit"
+  ],
+  "rotation": [
+    {
+      "name": "example-topic",
+      "reddit": "example",
+      "threads": "example-topic"
+    }
+  ],
+  "pinterest_board": "YOUR_BOARD"
+}

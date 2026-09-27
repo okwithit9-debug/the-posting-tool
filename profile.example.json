@@ -1,0 +1,20 @@
+{
+  "handle": "YOUR_HANDLE",
+  "cta_host": "YOUR_CTA_HOST",
+  "site": "https://YOUR_CTA_HOST",
+  "timezone": "UTC",
+  "chrome": {
+    "attach_only": true,
+    "profile_directory": "Profile 1",
+    "profile_name": "the Chrome profile name you already opened",
+    "cdp": "http://127.0.0.1:9222",
+    "never_launch": [
+      "any-second-Chrome",
+      "any-named-content-manager-Chrome"
+    ]
+  },
+  "daily_caps": {
+    "instagram": 25,
+    "threads": 25
+  }
+}

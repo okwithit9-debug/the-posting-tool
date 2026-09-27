@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Optional Python-backup LaunchAgent (not the primary path).
+
+        install_launchd.sh copies this file and substitutes __PROJECT_DIR__
+        with the user's repo path. Do not treat the example label as a
+        brand identity.
+
+        Triggers:
+          1. WatchPaths — a file change in .dispatch_queue/
+          2. StartCalendarInterval — example six-hour wall clock (not a
+             required default; edit after install)
+
+        Install:  ./install_launchd.sh
+        Uninstall: use the filename install_launchd.sh actually wrote.
+    -->
+    <key>Label</key>
+    <string>com.example.posting-tool</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>__PROJECT_DIR__/schedule_batch.py</string>
+        <string>dispatch</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__PROJECT_DIR__</string>
+
+    <key>WatchPaths</key>
+    <array>
+        <string>__PROJECT_DIR__/.dispatch_queue</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>0</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>__PROJECT_DIR__/logs/launchd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__PROJECT_DIR__/logs/launchd.err.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>PYTHONPATH</key>
+        <string>__PROJECT_DIR__</string>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>120</integer>
+</dict>
+</plist>

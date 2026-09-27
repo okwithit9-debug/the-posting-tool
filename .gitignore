@@ -1,0 +1,25 @@
+# Local media + run state (never commit)
+inbox/
+posted/
+failed/
+logs/
+tokens/
+.dispatch_queue/
+.in_flight/
+.*_done
+
+# Your private config (copy from the *.example files)
+config.json
+profile.json
+state.json
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# OS
+.DS_Store
