@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scheduled queue · The Posting Tool</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#262b36; --txt:#e7e9ee; --mut:#9aa3b2;
+          --ok:#2fbf71; --warn:#f2b134; --bad:#ef5b5b; --info:#5aa9ff; --gray:#6b7384; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         background:var(--bg); color:var(--txt); }
+  header { position:sticky; top:0; z-index:5; background:rgba(15,17,21,.96); border-bottom:1px solid var(--line);
+           padding:14px 20px 10px; }
+  h1 { font-size:18px; margin:0 12px 0 0; display:inline-block; }
+  .sub { color:var(--mut); font-size:12px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }
+  .chip { border:1px solid var(--line); background:var(--panel); color:var(--txt); border-radius:999px;
+          padding:4px 10px; cursor:pointer; font-size:12px; user-select:none; }
+  .chip.off { opacity:.4; }
+  .chip b { font-weight:600; }
+  button.primary { background:var(--info); color:#081222; border:0; border-radius:8px; padding:7px 12px;
+                   font-weight:600; cursor:pointer; }
+  button.primary[disabled] { opacity:.5; cursor:progress; }
+  label.tog { color:var(--mut); font-size:12px; display:flex; gap:6px; align-items:center; }
+  .checks { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:8px; margin-top:10px; }
+  .check { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-size:12px; min-width:0; }
+  .check .n { font-weight:600; display:flex; justify-content:space-between; gap:6px; }
+  .check .s { color:var(--mut); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  main { padding:12px 20px 40px; }
+  .day { margin:18px 0 6px; color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  .row { display:grid; grid-template-columns:72px 92px 110px 1fr 190px 150px; gap:12px; align-items:center;
+         background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:6px 0; }
+  .thumb { width:72px; height:96px; border-radius:6px; background:#0b0d11; overflow:hidden; display:flex;
+           align-items:center; justify-content:center; color:var(--gray); font-size:11px; }
+  .thumb video, .thumb img { width:100%; height:100%; object-fit:cover; }
+  .time { font-weight:600; font-variant-numeric:tabular-nums; }
+  .time small { display:block; color:var(--mut); font-weight:400; }
+  .plat { display:inline-flex; align-items:center; gap:6px; font-weight:600; }
+  .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .cap { color:#d6d9e0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+  .cap small { color:var(--mut); display:block; margin-top:2px; }
+  .pill { display:inline-block; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600; }
+  .st-verified { background:rgba(47,191,113,.15); color:var(--ok); }
+  .st-missing { background:rgba(239,91,91,.15); color:var(--bad); }
+  .st-not_tracked { background:rgba(90,169,255,.15); color:var(--info); }
+  .st-scheduled_unverified { background:rgba(242,177,52,.14); color:var(--warn); }
+  .st-published, .st-skipped { background:rgba(107,115,132,.2); color:var(--mut); }
+  .st-failed, .st-immediate { background:rgba(239,91,91,.12); color:#ff8a8a; }
+  .links a { color:var(--info); text-decoration:none; font-size:12px; display:block; }
+  .links span { color:var(--gray); font-size:12px; display:block; }
+  .empty { color:var(--mut); padding:40px; text-align:center; }
+  .log { font:11px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--mut); white-space:pre-wrap;
+         max-height:120px; overflow:auto; margin-top:8px; display:none; }
+  .legend { color:var(--mut); font-size:12px; margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Scheduled queue · The Posting Tool</h1><span class="sub" id="meta">loading…</span></div>
+  <div class="bar" id="platforms"></div>
+  <div class="bar">
+    <span id="statuses" class="bar" style="margin:0"></span>
+    <label class="tog"><input type="checkbox" id="history"> show history (past / failed / skipped)</label>
+    <span style="flex:1"></span>
+    <span class="sub" id="syncstate"></span>
+    <button class="primary" id="sync" title="Read-only check of each native scheduled list">Sync now</button>
+  </div>
+  <div class="checks" id="checks"></div>
+  <div class="log" id="log"></div>
+  <div class="legend">verified = seen on the native list at the last check · missing = the tool recorded it, the native list does not show it ·
+    not tracked by the tool = on the native list only · scheduled (unverified) = no fresh readable native list to compare with.
+    Browser checks are best-effort and read-only.</div>
+</header>
+<main id="list"><div class="empty">loading…</div></main>
+<script>
+const COLORS = {x:"#e7e9ee", threads:"#b58cff", tiktok:"#25f4ee", instagram:"#e1306c", pinterest:"#e60023", youtube:"#ff3d3d"};
+const NAMES = {x:"X", threads:"Threads", tiktok:"TikTok", instagram:"Instagram", pinterest:"Pinterest", youtube:"YouTube"};
+const ORDER = ["x","threads","tiktok","instagram","pinterest","youtube"];
+const STATUS_ORDER = ["verified","missing","not_tracked","scheduled_unverified","published","failed","skipped","immediate"];
+let data = null, platOn = new Set(ORDER), statusOn = new Set(STATUS_ORDER);
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const media = p => "/media?p=" + encodeURIComponent(p);
+function fmt(iso, opts) {
+  if (!iso) return "";
+  try { return new Intl.DateTimeFormat("en-US", {timeZone: data.timezone, ...opts}).format(new Date(iso)); }
+  catch (e) { return iso; }
+}
+function ago(iso) {
+  if (!iso) return "never";
+  const m = Math.round((Date.now() - new Date(iso).getTime())/60000);
+  if (m < 1) return "just now"; if (m < 60) return m + " min ago";
+  const h = Math.round(m/60); return h < 48 ? h + " h ago" : Math.round(h/24) + " d ago";
+}
+async function load() {
+  const hist = document.getElementById("history").checked ? 1 : 0;
+  const r = await fetch("/api/queue?history=" + hist);
+  data = await r.json();
+  render();
+}
+function render() {
+  document.getElementById("meta").textContent =
+    `${fmt(data.window.start,{month:"short",day:"numeric"})} → ${fmt(data.window.end,{month:"short",day:"numeric"})} · times in ${data.timezone}`;
+  const pc = {}; data.rows.forEach(r => pc[r.platform] = (pc[r.platform]||0)+1);
+  document.getElementById("platforms").innerHTML = ORDER.map(p =>
+    `<span class="chip ${platOn.has(p)?"":"off"}" data-p="${p}"><span class="dot" style="background:${COLORS[p]}"></span> ${NAMES[p]} <b>${pc[p]||0}</b></span>`).join("");
+  document.querySelectorAll("#platforms .chip").forEach(el => el.onclick = () => {
+    const p = el.dataset.p; platOn.has(p) ? platOn.delete(p) : platOn.add(p); render(); });
+  document.getElementById("statuses").innerHTML = STATUS_ORDER.filter(s => data.counts[s] || ["verified","missing","not_tracked","scheduled_unverified"].includes(s)).map(s =>
+    `<span class="chip ${statusOn.has(s)?"":"off"}" data-s="${s}"><span class="pill st-${s}" style="padding:0 6px">${esc(data.status_labels[s]||s)}</span> <b>${data.counts[s]||0}</b></span>`).join("");
+  document.querySelectorAll("#statuses .chip").forEach(el => el.onclick = () => {
+    const s = el.dataset.s; statusOn.has(s) ? statusOn.delete(s) : statusOn.add(s); render(); });
+  document.getElementById("checks").innerHTML = ORDER.map(p => {
+    const m = data.platforms[p] || {};
+    const st = m.snapshot_status || "never";
+    const color = st === "ok" ? (m.snapshot_fresh ? "var(--ok)" : "var(--warn)") : (st === "disabled" || st === "never" ? "var(--gray)" : "var(--bad)");
+    const note = (m.snapshot_note || "") + (m.affects_status ? "" : " (log-only)");
+    return `<div class="check" title="${esc(note)}"><div class="n"><span><span class="dot" style="background:${COLORS[p]}"></span> ${NAMES[p]}</span>
+      <a href="${esc(m.native_list_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--info);font-weight:400">native list ↗</a></div>
+      <div class="s"><span style="color:${color}">●</span> ${esc(st)} · ${ago(m.snapshot_checked_at)}</div>
+      <div class="s">${esc(note)}</div></div>`; }).join("");
+  const rows = data.rows.filter(r => platOn.has(r.platform) && statusOn.has(r.display_status));
+  const list = document.getElementById("list");
+  if (!rows.length) { list.innerHTML = `<div class="empty">Nothing scheduled in this window.</div>`; return; }
+  let html = "", lastDay = "";
+  for (const r of rows) {
+    const day = r.scheduled_for ? fmt(r.scheduled_for, {weekday:"long", month:"long", day:"numeric"}) : "No readable time";
+    if (day !== lastDay) { html += `<div class="day">${esc(day)}</div>`; lastDay = day; }
+    let thumb = `<div class="thumb">no media</div>`;
+    if (r.media_path) {
+      thumb = /\.(jpe?g|png|webp|gif)$/i.test(r.media_path)
+        ? `<div class="thumb"><img src="${media(r.media_path)}" alt=""></div>`
+        : `<div class="thumb"><video muted playsinline preload="metadata" src="${media(r.media_path)}#t=0.5"></video></div>`;
+    } else if (r.display_status === "not_tracked") { thumb = `<div class="thumb">native only</div>`; }
+    const time = r.scheduled_for ? fmt(r.scheduled_for, {hour:"numeric", minute:"2-digit"}) + (r.date_only ? " <small>date only</small>" : "") : "—";
+    const links = [
+      r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer">open on platform ↗</a>` : `<span>no platform link</span>`,
+      r.proof_screenshot ? `<a href="${media(r.proof_screenshot)}" target="_blank" rel="noopener">proof screenshot</a>` : "",
+    ].join("");
+    const note = [r.basename ? esc(r.basename) : "", r.error ? "error: " + esc(r.error) : "", r.note ? esc(r.note) : ""].filter(Boolean).join(" · ");
+    html += `<div class="row">${thumb}<div class="time">${time}</div>
+      <div class="plat"><span class="dot" style="background:${COLORS[r.platform]}"></span>${NAMES[r.platform]}</div>
+      <div class="cap">${esc(r.caption_preview) || "<i style='color:var(--gray)'>no caption on record</i>"}<small>${note}</small></div>
+      <div><span class="pill st-${r.display_status}">${esc(r.status_label)}</span></div>
+      <div class="links">${links}</div></div>`;
+  }
+  list.innerHTML = html;
+}
+async function pollSync() {
+  const r = await fetch("/api/sync/status"); const s = await r.json();
+  const btn = document.getElementById("sync"), log = document.getElementById("log");
+  btn.disabled = s.running;
+  document.getElementById("syncstate").textContent = s.running ? "checking native lists (read-only)…" : (s.exit_code === null ? "" : "last sync finished");
+  if (s.log && s.log.length) { log.style.display = "block"; log.textContent = s.log.join("\n"); }
+  if (s.running) setTimeout(pollSync, 2000); else if (s.exit_code !== null) load();
+}
+document.getElementById("sync").onclick = async () => {
+  await fetch("/api/sync", {method:"POST", headers:{"X-Posting-Dashboard":"1"}});
+  pollSync();
+};
+document.getElementById("history").onchange = load;
+load(); pollSync();
+setInterval(() => { if (!document.getElementById("sync").disabled) load(); }, 60000);
+</script>
+</body>
+</html>

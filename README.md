@@ -72,10 +72,32 @@ python3 schedule_batch.py dispatch
 Drop videos plus sidecar JSON into `inbox/`. Full details:
 [`INSTALL.md`](INSTALL.md).
 
+## Dashboard (scheduled queue)
+
+[`dashboard/`](dashboard/README.md) is a local, read-only page on
+`127.0.0.1` that lists every post the tool has scheduled on X, Threads,
+TikTok, Instagram, Pinterest and YouTube. Each row shows the time, a
+caption preview, a thumbnail, the proof screenshot and a status (verified /
+missing / not tracked / unverified). **Sync now** reads the native
+scheduled lists from a Chrome you already opened (attach-only over CDP).
+It never clicks Schedule, Post or Delete.
+
+```bash
+cd dashboard
+python3 -m posting_dashboard backfill   # import posted/ + failed/ receipts
+python3 -m posting_dashboard serve      # http://127.0.0.1:8765
+```
+
+After each native-list PASS, run the **Record it** step in
+[`docs/PLAYBOOK.md`](docs/PLAYBOOK.md#record-it-after-every-pass).
+
+![Dashboard with example data](dashboard/docs/dashboard-demo.png)
+
 ## Tests
 
 ```bash
 python3 -m unittest tests.test_safety_locks -v
+(cd dashboard && python3 -m unittest discover -s tests -t .)
 ```
 
 ## Notes

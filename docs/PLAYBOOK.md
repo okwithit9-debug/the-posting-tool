@@ -261,6 +261,28 @@ Instagram / Threads day.
 
 Do not grade a conversation. Do not grade a click path.
 
+## Record it (after every PASS)
+
+After a PASS, record the item in the local dashboard ledger
+(`logs/ledger.jsonl`, never committed). The agent path writes no receipts,
+so without this step the [dashboard](../dashboard/README.md) cannot show the
+post:
+
+```bash
+python3 -m dashboard.posting_dashboard record <basename> <platform> \
+  --status scheduled \
+  --scheduled-for 2026-10-01T11:00:00-07:00 \
+  --caption-file inbox/<basename>.json \
+  --media inbox/<basename>.mp4 \
+  --proof-screenshot logs/screenshots/<native-list proof>.png
+```
+
+- `--scheduled-for` must be ISO-8601 **with** a UTC offset.
+- For a FAIL, run `--status failed --error "<what happened>"`. For a SKIP,
+  run `--status skipped`.
+- Only the first 200 characters of the caption are stored.
+- Recording is not proof. The native-list screenshot is still the proof.
+
 ## Optional Python backup
 
 When cloud-model usage is exhausted, stop the computer-use session. You may

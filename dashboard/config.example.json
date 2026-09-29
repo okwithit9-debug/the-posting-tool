@@ -1,0 +1,55 @@
+{
+  "posting_tool_root": "..",
+  "timezone": null,
+  "host": "127.0.0.1",
+  "port": 8765,
+  "ledger": "logs/ledger.jsonl",
+  "snapshots_dir": "logs/dashboard/snapshots",
+  "paths": {
+    "posted": "posted",
+    "failed": "failed",
+    "in_flight": ".in_flight",
+    "inbox": "inbox",
+    "screenshots": "logs/screenshots",
+    "state": "state.json"
+  },
+  "dispatch_lock": ".dispatch.lock",
+  "window": {
+    "past_hours": 24,
+    "future_days": 14
+  },
+  "show_history": false,
+  "snapshot_max_age_minutes": 360,
+  "match": {
+    "minutes_tolerance": 2,
+    "caption_prefix_chars": 40
+  },
+  "checks": {
+    "x": {
+      "enabled": true
+    },
+    "tiktok": {
+      "enabled": true
+    },
+    "instagram": {
+      "enabled": true
+    },
+    "pinterest": {
+      "enabled": true
+    },
+    "threads": {
+      "enabled": false,
+      "affects_status": false
+    },
+    "youtube_api": {
+      "enabled": true
+    },
+    "youtube_studio": {
+      "enabled": false
+    }
+  },
+  "browser": {
+    "cdp_url": "http://127.0.0.1:9222"
+  },
+  "urls": {}
+}
